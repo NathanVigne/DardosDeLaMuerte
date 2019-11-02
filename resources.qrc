@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/ICO">
+        <file>Icone/Icone.png</file>
+    </qresource>
+    <qresource prefix="/Texture">
+        <file>texture/cardBoardBlanc.png</file>
+        <file>texture/cardBoardRed.png</file>
+        <file>texture/cardBoardVert.png</file>
+        <file>texture/cardBoardNoir.png</file>
+    </qresource>
+</RCC>
