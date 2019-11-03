@@ -28,7 +28,6 @@ public:
     virtual QPainterPath shape() const override;
 
     QPainterPath selectShape(shapeType select);
-    QImage  selectColor(numberType number);
     void addText(QPainter *painter);
 
 signals:
@@ -43,26 +42,26 @@ protected:
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
 
 private:
+    const QImage& selectColor(numberType number) const;
+    void loadRadius();
+    void loadShape();
+    qreal width() const;
+    qreal height() const;
+
     bool isHover = false;
     bool isPressed = false;
     QPainterPath pointShape;
 
-    void loadRadius();
-    void loadShape();
     QPointF Center;
     qreal rOutExt, rOutIn, rOutBull, rInBull, rInTriple, rOutTriple, rInDouble;
     QPainterPath OutZero, Triple, Double, Single, sBull, dBull;
     qreal angle;
 
-    qreal width() const;
-    qreal height() const;
-
     QColor color;
     shapeType whatShape;
     numberType number;
 
-    QImage texture;
-
+    const QImage& texture;
 };
 
 #endif // PointSecteur_H

@@ -1,12 +1,39 @@
 #include "pointsecteur.h"
+#include <cmath>
+
+class TextureProvider {
+public:
+    enum Color {
+        BLACK,
+        GREEN,
+        WHITE,
+        RED
+    };
+    const QImage& operator[](Color color) const {
+        return m_textures[color];
+    }
+private:
+    QImage m_textures[4] = {
+        QImage{":/Texture/texture/cardBoardNoir.png"},
+        QImage{":/Texture/texture/cardBoardVert.png"},
+        QImage{":/Texture/texture/cardBoardBlanc.png"},
+        QImage{":/Texture/texture/cardBoardRed.png"}
+    };
+};
+
+static const TextureProvider& texture_provider() {
+    static TextureProvider provider;
+    return provider;
+}
 
 PointSecteur::PointSecteur(Secteur *parent, shapeType whatShape, numberType number)
-                : Secteur(parent),
-                  isHover(false),
-                  isPressed(false),
-                  color(Qt::black),
-                  whatShape(whatShape),
-                  number(number)
+    : Secteur(parent),
+      isHover(false),
+      isPressed(false),
+      color(Qt::black),
+      whatShape(whatShape),
+      number(number),
+      texture(selectColor(number))
 
 {
     // Pour gerer les evènement de la souris
@@ -18,34 +45,29 @@ PointSecteur::PointSecteur(Secteur *parent, shapeType whatShape, numberType numb
     loadShape();
     pointShape = selectShape(whatShape);
 
-    // Charge la bonne texture
-    texture = selectColor(number);
-
     // Connect le click
     connect(this,&PointSecteur::clickPoint,parent->L,&QLabel::setText);
 
     update();
-
-
 }
 
 
 QRectF PointSecteur::boundingRect() const
 {
-    // Zone de dessin   
+    // Zone de dessin
     QRectF section = QRectF(Center.x()-this->width()/2,Center.y()-this->height(),this->width(),this->height());
     QRectF bull = QRectF(Center.x()-rOutBull,Center.y()-rOutBull,rOutBull*2,rOutBull*2);
     QRectF board = QRectF(Center.x()-rOutExt,Center.y()-rOutExt,rOutExt*2,rOutExt*2);
 
     switch (whatShape) {
 
-        case shapeType::OUT :               return board;
-        case shapeType::SINGLE :            return section;
-        case shapeType::DOUBLE :            return section;
-        case shapeType::TRIPLE :            return section;
-        case shapeType::SINGLEBULL :        return bull;
-        case shapeType::DOUBLEBULL :        return bull;
-        default:                            return QRectF();
+    case shapeType::OUT :               return board;
+    case shapeType::SINGLE :            return section;
+    case shapeType::DOUBLE :            return section;
+    case shapeType::TRIPLE :            return section;
+    case shapeType::SINGLEBULL :        return bull;
+    case shapeType::DOUBLEBULL :        return bull;
+    default:                            return QRectF();
 
     }
 
@@ -98,53 +120,58 @@ QPainterPath PointSecteur::selectShape(shapeType select)
 {
     switch (select) {
 
-        case shapeType::OUT :               return OutZero;
-        case shapeType::SINGLE :            return Single;
-        case shapeType::DOUBLE :            return Double;
-        case shapeType::TRIPLE :            return Triple;
-        case shapeType::SINGLEBULL :        return sBull;
-        case shapeType::DOUBLEBULL :        return dBull;
-        default:                            return QPainterPath();
+    case shapeType::OUT :               return OutZero;
+    case shapeType::SINGLE :            return Single;
+    case shapeType::DOUBLE :            return Double;
+    case shapeType::TRIPLE :            return Triple;
+    case shapeType::SINGLEBULL :        return sBull;
+    case shapeType::DOUBLEBULL :        return dBull;
+    default:                            return QPainterPath();
     }
-
 }
 
-QImage PointSecteur::selectColor(numberType number)
+template <size_t SIZE>
+constexpr bool isInGroup (numberType number, const std::array<numberType, SIZE>& group){
+    return std::find(std::begin(group), std::end(group), number) != std::end(group);
+}
+
+const QImage& PointSecteur::selectColor(numberType number) const
 {
+    constexpr std::array<numberType, 1> group_1 = {ZERO};
+    constexpr std::array<numberType, 1> group_2 = {VINGTCINQ};
+    constexpr std::array<numberType, 10> group_3 = {UN, QUATRE, CINQ, SIX, NEUF, ONZE, QUINZE, SEIZE, DIXSEPT, DIXNEUF};
 
-
-    if(number == ZERO){
-            switch (whatShape) {
-
-                case shapeType::OUT :                 return QImage(":/Texture/texture/cardBoardNoir.png");
-                default :                              return QImage();
-            }
-        }else if (number == VINGTCINQ){
-            switch (whatShape) {
-
-                case shapeType::SINGLEBULL :               return QImage(":/Texture/texture/cardBoardVert.png");
-                case shapeType::DOUBLEBULL :               return QImage(":/Texture/texture/cardBoardRed.png");
-                default :                              return QImage();
-            }
-        }else if ((number == UN) || (number == QUATRE) || (number == CINQ) || (number == SIX)
-                  || (number == NEUF) || (number == ONZE) || (number == QUINZE) || (number == SEIZE)
-                  || (number == DIXSEPT) || (number == DIXNEUF)){
-            switch (whatShape) {
-
-                case shapeType::SINGLE :               return QImage(":/Texture/texture/cardBoardBlanc.png");
-                case shapeType::DOUBLE :               return QImage(":/Texture/texture/cardBoardVert.png");
-                case shapeType::TRIPLE :               return QImage(":/Texture/texture/cardBoardVert.png");
-                default :                              return QImage();
-            }
-        }else{
-            switch (whatShape) {
-
-                case shapeType::SINGLE :               return QImage(":/Texture/texture/cardBoardNoir.png");
-                case shapeType::DOUBLE :               return QImage(":/Texture/texture/cardBoardRed.png");
-                case shapeType::TRIPLE :               return QImage(":/Texture/texture/cardBoardRed.png");
-                default :                              return QImage();
-            }
+    if(isInGroup(number, group_1)){
+        switch (whatShape) {
+        case shapeType::OUT : return texture_provider()[TextureProvider::BLACK];
+        default: break;
         }
+    }else if (isInGroup(number, group_2)){
+        switch (whatShape) {
+        case shapeType::SINGLEBULL : return texture_provider()[TextureProvider::GREEN];
+        case shapeType::DOUBLEBULL : return texture_provider()[TextureProvider::RED];
+        default: break;
+
+        }
+    }else if (isInGroup(number, group_3)){
+        switch (whatShape) {
+        case shapeType::SINGLE :               return texture_provider()[TextureProvider::WHITE];
+
+        case shapeType::DOUBLE :
+        case shapeType::TRIPLE :               return texture_provider()[TextureProvider::GREEN];
+        default: break;
+
+        }
+    }else{
+        switch (whatShape) {
+
+        case shapeType::SINGLE :               return texture_provider()[TextureProvider::BLACK];
+        case shapeType::DOUBLE :
+        case shapeType::TRIPLE :               return texture_provider()[TextureProvider::RED];
+        default: break;
+        }
+    }
+    throw std::runtime_error("Texture not found");
 }
 
 void PointSecteur::addText(QPainter *painter)
@@ -294,7 +321,7 @@ void PointSecteur::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
         update();
     }else
     {
-       event->ignore();
+        event->ignore();
     }
 }
 
@@ -333,24 +360,24 @@ void PointSecteur::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent)
 
 void PointSecteur::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
 {
-        Q_UNUSED(mouseEvent)
-        isPressed = false;
+    Q_UNUSED(mouseEvent)
+    isPressed = false;
 
-        QString point;
+    QString point;
 
-        switch (PointSecteur::whatShape) {
+    switch (PointSecteur::whatShape) {
 
-            case shapeType::OUT :               point = "0";break;
-            case shapeType::SINGLE :            point = point.number(PointSecteur::number);break;
-            case shapeType::DOUBLE :            point = point.number(PointSecteur::number*2);break;
-            case shapeType::TRIPLE :            point = point.number(PointSecteur::number*3);break;
-            case shapeType::SINGLEBULL :        point = point.number(PointSecteur::number);break;
-            case shapeType::DOUBLEBULL :        point = point.number(PointSecteur::number*2);break;
-            default:                            point = "default" ;
+    case shapeType::OUT :               point = "0";break;
+    case shapeType::SINGLE :            point = point.number(PointSecteur::number);break;
+    case shapeType::DOUBLE :            point = point.number(PointSecteur::number*2);break;
+    case shapeType::TRIPLE :            point = point.number(PointSecteur::number*3);break;
+    case shapeType::SINGLEBULL :        point = point.number(PointSecteur::number);break;
+    case shapeType::DOUBLEBULL :        point = point.number(PointSecteur::number*2);break;
+    default:                            point = "default" ;
 
-        }
+    }
 
-        emit PointSecteur::clickPoint(point);
-        update();
+    emit PointSecteur::clickPoint(point);
+    update();
 
 }
